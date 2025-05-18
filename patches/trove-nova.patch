@@ -1,0 +1,21 @@
+diff --git a/trove/trove/common/cfg.py b/trove/trove/common/cfg.py
+index abc123..def456 789
+--- a/trove/trove/common/cfg.py
++++ b/trove/trove/common/cfg.py
+@@ -100,6 +100,7 @@ def register_opts():
+     # Nova configuration
+     nova_opts = [
+         cfg.BoolOpt('use_nova',
++                    default=False,  # Disable Nova by default
+                     help='Whether to use Nova for instance management'),
+         cfg.StrOpt('nova_compute_url',
+                    help='URL for Nova compute service'),
+@@ -200,6 +201,7 @@ def register_opts():
+     # Instance configuration
+     instance_opts = [
+         cfg.BoolOpt('use_nova',
++                    default=False,  # Disable Nova by default
+                     help='Whether to use Nova for instance management'),
+         cfg.StrOpt('oracle_middleware_url',
+                    default='http://localhost:8000',
+``` 

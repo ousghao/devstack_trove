@@ -1,0 +1,65 @@
+# Trove plugin for DevStack
+# This plugin configures Trove to work with Oracle middleware instead of Nova
+
+function trove_plugin_install {
+    # Install Trove
+    git_clone_by_name "trove"
+    setup_dev_lib "trove"
+    
+    # Install Oracle middleware dependencies
+    pip_install -r $TROVE_DIR/oracle_middleware/requirements.txt
+    
+    # Copy middleware service file
+    sudo cp $TROVE_DIR/oracle_middleware/oracle-middleware.service /etc/systemd/system/
+    sudo systemctl daemon-reload
+}
+
+function trove_plugin_configure {
+    # Configure Trove to use Oracle middleware
+    iniset $TROVE_CONF DEFAULT oracle_middleware_url "http://localhost:8000"
+    iniset $TROVE_CONF DEFAULT use_nova false
+    
+    # Disable Nova-related services
+    disable_service n-api n-cpu n-cond n-sch n-novnc n-cauth
+    disable_service placement-api placement-client
+    
+    # Remove compute service type from Keystone
+    if is_service_enabled keystone; then
+        # Remove compute service if it exists
+        openstack service delete compute || true
+    fi
+    
+    # Enable Oracle middleware service
+    enable_service oracle-middleware
+}
+
+function trove_plugin_start {
+    # Start Trove services
+    start_service trove-api
+    start_service trove-taskmanager
+    start_service oracle-middleware
+    
+    # Wait for middleware to be ready
+    echo "Waiting for Oracle middleware to start..."
+    for i in $(seq 1 60); do
+        if curl -s http://localhost:8000/status/test > /dev/null; then
+            echo "Oracle middleware is running!"
+            break
+        fi
+        echo "Waiting for service to start... (attempt $i/60)"
+        sleep 2
+    done
+}
+
+function trove_plugin_stop {
+    stop_service oracle-middleware
+    stop_service trove-taskmanager
+    stop_service trove-api
+}
+
+function trove_plugin_clean {
+    # Clean up middleware service
+    sudo systemctl stop oracle-middleware || true
+    sudo rm -f /etc/systemd/system/oracle-middleware.service
+    sudo systemctl daemon-reload
+} 

@@ -1,0 +1,16 @@
+diff --git a/functions-common b/functions-common
+index abc123..def456 789
+--- a/functions-common
++++ b/functions-common
+@@ -1000,6 +1000,10 @@ function wait_for_compute {
+     local compute_host=$1
+     local compute_port=$2
+ 
++    # Skip compute service check since we're using Oracle middleware
++    echo "Skipping compute service check - using Oracle middleware instead"
++    return 0
++
+     if [[ -z $compute_host ]]; then
+         compute_host=$SERVICE_HOST
+     fi
+ } 
